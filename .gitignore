@@ -3,4 +3,5 @@ dist
 logs
 nohup.out
 scripts/windows/runtime
-backups/pre_build_*
+backups/
+db.json
