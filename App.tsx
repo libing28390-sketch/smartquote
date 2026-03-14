@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Package, FileText, PlusCircle, LogOut, Menu, Users, X, Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Home, List as ListIcon, User as UserIcon, Globe, Lock, Edit3, Trash2, StickyNote, ShoppingCart, PlusSquare, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Package, FileText, PlusCircle, LogOut, Menu, Users, X, ChevronLeft, ChevronRight, List as ListIcon, User as UserIcon, Lock, ShoppingCart, ChevronDown } from 'lucide-react';
 import { Routes, Route, Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Product, Quote, View, User, SalesOrder, Customer } from './types';
 import Dashboard from './components/Dashboard';
@@ -17,70 +17,61 @@ import Login from './components/Login';
 import ApiService from './services/cloudService';
 import { useIdleTimeout } from './hooks/useIdleTimeout';
 
-const WindowsCalendar = () => {
-  const [viewDate, setViewDate] = useState(new Date());
-  const today = new Date();
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
-  const calendarDays = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const days = [];
-    const totalDays = daysInMonth(year, month);
-    const startDay = firstDayOfMonth(year, month);
-    const prevMonthDays = daysInMonth(year, month - 1);
-    for (let i = startDay - 1; i >= 0; i--) days.push({ day: prevMonthDays - i, currentMonth: false });
-    for (let i = 1; i <= totalDays; i++) days.push({ day: i, currentMonth: true });
-    const remaining = 42 - days.length;
-    for (let i = 1; i <= remaining; i++) days.push({ day: i, currentMonth: false });
-    return days;
-  }, [viewDate]);
-  const changeMonth = (offset: number) => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1));
-  return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{viewDate.getFullYear()}年 {viewDate.getMonth() + 1}月</span>
-        <div className="flex gap-2">
-          <button onClick={() => changeMonth(-1)} title="上个月" aria-label="上个月" className="p-1 hover:bg-white/10 rounded-lg text-slate-400 transition-colors"><ChevronLeft size={14}/></button>
-          <button onClick={() => changeMonth(1)} title="下个月" aria-label="下个月" className="p-1 hover:bg-white/10 rounded-lg text-slate-400 transition-colors"><ChevronRight size={14}/></button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="text-[9px] font-bold text-slate-600 text-center py-1">{d}</div>))}
-        {calendarDays.map((d, i) => {
-          const isToday = d.currentMonth && d.day === today.getDate() && viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
-          return (
-            <div key={i} className={`aspect-square flex items-center justify-center text-[10px] font-medium rounded-full transition-all cursor-default ${d.currentMonth ? 'text-slate-300' : 'text-slate-700 opacity-40'} ${isToday ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'hover:bg-white/5'}`}>{d.day}</div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const Scratchpad = () => {
-  const [note, setNote] = useState(() => localStorage.getItem('kebos_scratchpad') || '');
-  useEffect(() => {
-    const handler = setTimeout(() => localStorage.setItem('kebos_scratchpad', note), 500);
-    return () => clearTimeout(handler);
-  }, [note]);
-  return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2"><Edit3 size={12} className="text-blue-400" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">业务随手记</span></div>
-        <button onClick={() => setNote('')} title="清空便签" aria-label="清空便签" className="text-slate-600 hover:text-rose-500 transition-colors"><Trash2 size={12} /></button>
-      </div>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="记录今日工作要点..." className="w-full h-32 bg-transparent text-slate-300 text-[11px] leading-relaxed resize-none outline-none font-medium placeholder:text-slate-700 no-scrollbar" />
-    </div>
-  );
-};
-
 type MenuItem = {
   id: string;
   icon: React.ElementType;
   label: string;
   path: string;
   children?: { label: string; path: string; icon?: React.ElementType }[];
+};
+
+const MobileNavItem = ({ item }: { item: MenuItem }) => {
+  const location = useLocation();
+  const isActive = location.pathname.startsWith(item.path);
+  const [showSubmenu, setShowSubmenu] = useState(false);
+
+  if (!item.children) {
+    return (
+      <NavLink
+        to={item.path}
+        className={({ isActive }) => `flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-95 ${isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}
+      >
+        <item.icon size={20} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
+        <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
+      </NavLink>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {showSubmenu && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-10" onClick={() => setShowSubmenu(false)} />
+          <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 min-w-[140px] z-20 animate-in slide-in-from-bottom-5 fade-in duration-200 flex flex-col gap-1">
+            {item.children.map(child => (
+              <NavLink
+                key={child.path}
+                to={child.path}
+                onClick={() => setShowSubmenu(false)}
+                className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-600 hover:bg-slate-50'}`}
+              >
+                {child.icon && <child.icon size={16} />}
+                <span>{child.label}</span>
+              </NavLink>
+            ))}
+            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-b border-r border-slate-100"></div>
+          </div>
+        </>
+      )}
+      <button
+        onClick={() => setShowSubmenu(!showSubmenu)}
+        className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-95 ${isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'} ${showSubmenu ? 'z-30 bg-white shadow-lg ring-1 ring-slate-100' : ''}`}
+      >
+        <item.icon size={20} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
+        <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
+      </button>
+    </div>
+  );
 };
 
 const SidebarItem = ({ item, isSidebarOpen }: { item: MenuItem; isSidebarOpen: boolean }) => {
@@ -313,14 +304,6 @@ const App: React.FC = () => {
     if (currentUser) init();
   }, [currentUser?.username]); // Only re-run if username changes (or on mount if user exists)
 
-  const getWeekNumber = (d: Date) => {
-    const date = new Date(d.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    const week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-  };
-
   const handleSaveQuote = async (q: Quote) => {
     if (quotesError) {
         alert("无法保存报价单：数据加载失败。请刷新页面重试，以防止数据丢失。");
@@ -492,10 +475,6 @@ const App: React.FC = () => {
               </NavLink>
             )}
           </div>
-          {isSidebarOpen && (<div className="mt-10 px-2 space-y-4 animate-in fade-in slide-in-from-left duration-700">
-            <div className="p-5 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-md"><div className="flex items-center justify-between mb-3"><span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Business Time</span><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /></div><div className="text-2xl font-black text-white tracking-tighter tabular-nums mb-1">{currentTime.toLocaleTimeString('zh-CN', { hour12: false })}</div><div className="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>Week {getWeekNumber(currentTime)}</span><span>{currentTime.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}</span></div></div>
-            <WindowsCalendar /><Scratchpad />
-          </div>)}
         </nav>
         <div className="p-8 shrink-0"><button onClick={() => handleSetUser(null)} className="w-full flex items-center gap-3 px-5 py-4 text-slate-500 hover:text-rose-500 transition-all font-bold"><LogOut size={20} />{isSidebarOpen && <span>退出系统</span>}</button></div>
       </aside>
@@ -609,54 +588,7 @@ const App: React.FC = () => {
         
         {/* Mobile Navigation Bar */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 flex items-center justify-around pb-safe pt-3 pb-3 px-2 z-50 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
-          {menuItems.map(item => {
-            if (item.children) {
-              const isActive = location.pathname.startsWith(item.path);
-              const [showSubmenu, setShowSubmenu] = useState(false);
-              
-              return (
-                <div key={item.id} className="relative">
-                  {showSubmenu && (
-                    <>
-                      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-10" onClick={() => setShowSubmenu(false)} />
-                      <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 min-w-[140px] z-20 animate-in slide-in-from-bottom-5 fade-in duration-200 flex flex-col gap-1">
-                        {item.children.map(child => (
-                          <NavLink
-                            key={child.path}
-                            to={child.path}
-                            onClick={() => setShowSubmenu(false)}
-                            className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-600 hover:bg-slate-50'}`}
-                          >
-                            {child.icon && <child.icon size={16} />}
-                            <span>{child.label}</span>
-                          </NavLink>
-                        ))}
-                        <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-b border-r border-slate-100"></div>
-                      </div>
-                    </>
-                  )}
-                  <button
-                    onClick={() => setShowSubmenu(!showSubmenu)}
-                    className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-95 ${isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'} ${showSubmenu ? 'z-30 bg-white shadow-lg ring-1 ring-slate-100' : ''}`}
-                  >
-                    <item.icon size={20} className={isActive ? "stroke-[2.5px]" : "stroke-2"} />
-                    <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
-                  </button>
-                </div>
-              );
-            }
-
-            return (
-              <NavLink
-                key={item.id}
-                to={item.path}
-                className={({ isActive }) => `flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-95 ${isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}
-              >
-                <item.icon size={20} className={({ isActive }: any) => isActive ? "stroke-[2.5px]" : "stroke-2"} />
-                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
-              </NavLink>
-            );
-          })}
+          {menuItems.map(item => <MobileNavItem key={item.id} item={item} />)}
           {currentUser.role === 'admin' && (
             <NavLink
               to="/users"
