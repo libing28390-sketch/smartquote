@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, Package, FileText, PlusCircle, LogOut, Menu, Users, X, Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Home, List as ListIcon, User as UserIcon, Globe, Lock, Edit3, Trash2, StickyNote, ShoppingCart, PlusSquare, ChevronDown } from 'lucide-react';
-import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Product, Quote, View, User, SalesOrder, Customer } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
@@ -590,13 +590,15 @@ const App: React.FC = () => {
                 await ApiService.saveCustomers(updatedList);
               }} />} />
               <Route path="/quotes" element={<Navigate to="/quotes/list" replace />} />
-              <Route path="/quotes/list" element={<QuoteList quotes={quotes} products={products} customers={customers} onDelete={handleDeleteQuote} onBatchDelete={handleBatchDeleteQuoteItems} onPreview={(q, item) => { setGlobalPreviewQuote(q); setGlobalPreviewItem(item || null); }} onImport={async (qs) => { const u = [...qs, ...quotes]; setQuotes(u); await ApiService.saveQuotes(u); }} onCreateOrder={(q) => { navigate('/orders/new', { state: { initialQuote: q } }); }} onEdit={(q) => { navigate('/quotes/edit', { state: { initialQuote: q } }); }} />} />
+              <Route path="/quotes/list" element={<QuoteList quotes={quotes} products={products} customers={customers} onDelete={handleDeleteQuote} onBatchDelete={handleBatchDeleteQuoteItems} onPreview={(q, item) => { setGlobalPreviewQuote(q); setGlobalPreviewItem(item || null); }} onImport={async (qs) => { const u = [...qs, ...quotes]; setQuotes(u); await ApiService.saveQuotes(u); }} onCreateOrder={(q) => { navigate('/orders/new', { state: { initialQuote: q } }); }} onEdit={(q) => { navigate(`/quotes/edit/${encodeURIComponent(q.id)}`, { state: { initialQuote: q } }); }} />} />
               <Route path="/quotes/new" element={<QuoteForm products={products} quotes={quotes} onSave={handleSaveQuote} onCancel={() => navigate('/quotes/list')} onPreview={(q) => { setGlobalPreviewQuote(q); setGlobalPreviewItem(null); }} />} />
               <Route path="/quotes/edit" element={<QuoteFormWrapper products={products} quotes={quotes} onSave={handleSaveQuote} onCancel={() => navigate('/quotes/list')} onPreview={(q) => { setGlobalPreviewQuote(q); setGlobalPreviewItem(null); }} />} />
+              <Route path="/quotes/edit/:quoteId" element={<QuoteFormWrapper products={products} quotes={quotes} onSave={handleSaveQuote} onCancel={() => navigate('/quotes/list')} onPreview={(q) => { setGlobalPreviewQuote(q); setGlobalPreviewItem(null); }} />} />
               <Route path="/orders" element={<Navigate to="/orders/list" replace />} />
-              <Route path="/orders/list" element={<OrderList orders={orders} onViewOrder={(o) => { navigate('/orders/edit', { state: { initialOrder: o } }); }} onCreateOrder={() => { navigate('/orders/new'); }} onDelete={handleDeleteOrder} />} />
+              <Route path="/orders/list" element={<OrderList orders={orders} onViewOrder={(o) => { navigate(`/orders/edit/${encodeURIComponent(o.id)}`, { state: { initialOrder: o } }); }} onCreateOrder={() => { navigate('/orders/new'); }} onDelete={handleDeleteOrder} />} />
               <Route path="/orders/new" element={<OrderFormWrapper currentUser={currentUser} products={products} quotes={quotes} orders={orders} customers={customers} onSave={handleSaveOrder} onCancel={() => navigate('/orders/list')} />} />
               <Route path="/orders/edit" element={<OrderFormWrapper currentUser={currentUser} products={products} quotes={quotes} orders={orders} customers={customers} onSave={handleSaveOrder} onCancel={() => navigate('/orders/list')} />} />
+              <Route path="/orders/edit/:orderId" element={<OrderFormWrapper currentUser={currentUser} products={products} quotes={quotes} orders={orders} customers={customers} onSave={handleSaveOrder} onCancel={() => navigate('/orders/list')} />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/profile" element={<ProfileSettings user={currentUser} onUserUpdated={handleUpdateUser} />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -666,7 +668,7 @@ const App: React.FC = () => {
           )}
         </nav>
       </div>
-      {globalPreviewQuote && <QuoteDetailModal quote={globalPreviewQuote} item={globalPreviewItem} onClose={() => { setGlobalPreviewQuote(null); setGlobalPreviewItem(null); }} logo={logoPath} onEdit={(q) => { setGlobalPreviewQuote(null); setGlobalPreviewItem(null); navigate('/quotes/edit', { state: { initialQuote: q } }); }} />}
+      {globalPreviewQuote && <QuoteDetailModal quote={globalPreviewQuote} item={globalPreviewItem} onClose={() => { setGlobalPreviewQuote(null); setGlobalPreviewItem(null); }} logo={logoPath} onEdit={(q) => { setGlobalPreviewQuote(null); setGlobalPreviewItem(null); navigate(`/quotes/edit/${encodeURIComponent(q.id)}`, { state: { initialQuote: q } }); }} />}
       {customersError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
             <div className="bg-white p-8 rounded-2xl shadow-2xl border border-rose-100 text-center max-w-md mx-4 animate-in zoom-in-95">
@@ -688,12 +690,19 @@ const App: React.FC = () => {
 // Wrapper component to handle location state for QuoteForm
 const QuoteFormWrapper: React.FC<any> = (props) => {
   const location = useLocation();
+  const params = useParams();
   const state = location.state as { initialQuote?: Quote } | null;
+  const quoteId = params.quoteId ? decodeURIComponent(params.quoteId) : null;
+  const initialQuote = state?.initialQuote || props.quotes.find((quote: Quote) => quote.id === quoteId);
+
+  if (location.pathname.startsWith('/quotes/edit') && !initialQuote) {
+    return <Navigate to="/quotes/list" replace />;
+  }
   
   return (
     <QuoteForm 
       {...props} 
-      initialQuote={state?.initialQuote} 
+      initialQuote={initialQuote} 
     />
   );
 };
@@ -701,12 +710,19 @@ const QuoteFormWrapper: React.FC<any> = (props) => {
 // Wrapper component to handle location state for OrderForm
 const OrderFormWrapper: React.FC<any> = (props) => {
   const location = useLocation();
+  const params = useParams();
   const state = location.state as { initialOrder?: SalesOrder; initialQuote?: Quote } | null;
+  const orderId = params.orderId ? decodeURIComponent(params.orderId) : null;
+  const initialOrder = state?.initialOrder || props.orders.find((order: SalesOrder) => order.id === orderId);
+
+  if (location.pathname.startsWith('/orders/edit') && !initialOrder) {
+    return <Navigate to="/orders/list" replace />;
+  }
   
   return (
     <OrderForm 
       {...props} 
-      initialOrder={state?.initialOrder} 
+      initialOrder={initialOrder} 
       initialQuote={state?.initialQuote} 
     />
   );
