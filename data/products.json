@@ -1,0 +1,110 @@
+[
+  {
+    "id": "PROD-1769263530914-2",
+    "kebosModel": "LG1500VA",
+    "supplierModel": "APEX 1500 HV",
+    "series": "Online LF",
+    "category": "UPS",
+    "description": "111",
+    "batteryInfo": "12V9AH*2/24V",
+    "moq": 200,
+    "productSize": "397*147*205",
+    "packingSize": "411*411*310",
+    "pcsPerCtn": 1,
+    "nw": 20.98,
+    "gw": 21.8,
+    "packaging": "",
+    "yearlyCosts": {
+      "2025": {
+        "usd": 41,
+        "rmb": 291
+      },
+      "2026": {
+        "usd": 41.05,
+        "rmb": 291
+      }
+    },
+    "updatedAt": "2026-01-24T14:14:44.942Z"
+  },
+  {
+    "id": "PROD-1769263530914-3",
+    "kebosModel": "LG2000VA",
+    "supplierModel": "APEX 2000 HV",
+    "series": "Line-Interactive",
+    "category": "UPS",
+    "description": "222",
+    "batteryInfo": "12V9AH*2/24V",
+    "moq": 200,
+    "productSize": "397*147*205",
+    "packingSize": "411*411*310",
+    "pcsPerCtn": 1,
+    "nw": 21.46,
+    "gw": 22.25,
+    "packaging": "",
+    "yearlyCosts": {
+      "2025": {
+        "usd": 48,
+        "rmb": 341
+      },
+      "2026": {
+        "usd": 48,
+        "rmb": 341
+      }
+    },
+    "updatedAt": "2026-01-24T14:14:44.942Z"
+  },
+  {
+    "id": "PROD-1769263530914-4",
+    "kebosModel": "KT11 Lite -10KL",
+    "supplierModel": "塔式工频单单10KL",
+    "series": "Line-Interactive",
+    "category": "Spare Parts",
+    "description": "10KVA/8KW,Input Voltage Range:165-285VAC,Frequency Range:40-55Hz or 56-64Hz,Output Voltage:208V/220/230VAC±1%,Frequency Range (Synchronized Range):45-55Hz or 56-64Hz,Transfer Time:0 ms, DC192V,ONLINE  TOWER UPS，592*300*826MM,Weight:86KG",
+    "batteryInfo": "192VDC",
+    "moq": 1,
+    "productSize": "592*300*826mm",
+    "packingSize": "411*411*310",
+    "pcsPerCtn": 1,
+    "nw": 86,
+    "gw": 0,
+    "packaging": "",
+    "yearlyCosts": {
+      "2025": {
+        "usd": 0,
+        "rmb": 0
+      },
+      "2026": {
+        "usd": 473,
+        "rmb": 3713
+      }
+    },
+    "updatedAt": "2026-01-24T14:14:44.942Z"
+  },
+  {
+    "id": "PROD-1769263530914-5",
+    "kebosModel": "KT11 Lite -7.5KL",
+    "supplierModel": "塔式工频单单7.5KL",
+    "series": "Online LF",
+    "category": "Spare Parts",
+    "description": "7.5KVA/6KW,Input Voltage Range:165-285VAC,Frequency Range:40-55Hz or 56-64Hz,Output Voltage:208V/220/230VAC±1%,Frequency Range (Synchronized Range):45-55Hz or 56-64Hz,Transfer Time:0 ms, DC192V,ONLINE  TOWER UPS，592*300*826MM,Weight:86KG",
+    "batteryInfo": "192VDC",
+    "moq": 1,
+    "productSize": "592*300*826mm",
+    "packingSize": "411*411*310",
+    "pcsPerCtn": 1,
+    "nw": 78,
+    "gw": 0,
+    "packaging": "",
+    "yearlyCosts": {
+      "2025": {
+        "usd": 0,
+        "rmb": 0
+      },
+      "2026": {
+        "usd": 472,
+        "rmb": 3700
+      }
+    },
+    "updatedAt": "2026-01-24T14:14:44.942Z"
+  }
+]

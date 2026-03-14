@@ -1,0 +1,255 @@
+{
+  "users": [
+    {
+      "username": "libing",
+      "passwordHash": "bEkxOTg2MDkyMS4=",
+      "role": "staff"
+    },
+    {
+      "username": "admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "mustChangePassword": true
+    }
+  ],
+  "products": [
+    {
+      "id": "PROD-1767064541677-2",
+      "kebosModel": "PG650VA Lite",
+      "supplierModel": "APEX 450 HV",
+      "description": "650VA/390W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 4.5AHx1pc,LED,Line Interactive UPS",
+      "batteryInfo": "12V4.5AH*1/12V",
+      "moq": 500,
+      "productSize": "279*101*142",
+      "packingSize": "599*341*250",
+      "nw": 15.24,
+      "gw": 16.02,
+      "packaging": "4PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 15,
+          "rmb": 120.345
+        },
+        "2025": {
+          "usd": 15,
+          "rmb": 120.345
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-3",
+      "kebosModel": "PG650VA",
+      "supplierModel": "APEX 650 HV",
+      "description": "650VA/390W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 7AHx1pc,LED,Line Interactive UPS",
+      "batteryInfo": "12V7AH*1/12V",
+      "moq": 500,
+      "productSize": "279*101*142",
+      "packingSize": "599*341*250",
+      "nw": 16.56,
+      "gw": 17.31,
+      "packaging": "4PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 17,
+          "rmb": 136.391
+        },
+        "2025": {
+          "usd": 17,
+          "rmb": 136.391
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-4",
+      "kebosModel": "PG800VA",
+      "supplierModel": "APEX 850 HV",
+      "description": "800VA/480W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 9AHx1pc,LED,Line Interactive UPS",
+      "batteryInfo": "12V9AH*1/12V",
+      "moq": 500,
+      "productSize": "279*101*142",
+      "packingSize": "599*341*250",
+      "nw": 20.4,
+      "gw": 21.22,
+      "packaging": "4PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 22,
+          "rmb": 176.506
+        },
+        "2025": {
+          "usd": 22,
+          "rmb": 176.506
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-5",
+      "kebosModel": "PG1000VA Lite",
+      "supplierModel": "APEX 850 HV",
+      "description": "1000VA/600W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V9AHx1pc,LED,Line Interactive UPS",
+      "batteryInfo": "12V9AH*1/12V",
+      "moq": 200,
+      "productSize": "279*101*142",
+      "packingSize": "599*341*250",
+      "nw": 21.5,
+      "gw": 23,
+      "packaging": "4PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 22,
+          "rmb": 176.506
+        },
+        "2025": {
+          "usd": 22,
+          "rmb": 176.506
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-6",
+      "kebosModel": "PG1000VA",
+      "supplierModel": "APEX 1000 HV",
+      "description": "1000VA/600W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 7AHx2pcs,LED,Line Interactive UPS",
+      "batteryInfo": "12V7AH*2/24V",
+      "moq": 200,
+      "productSize": "320*130*182",
+      "packingSize": "411*411*310",
+      "nw": 15.64,
+      "gw": 16.44,
+      "packaging": "2PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 31,
+          "rmb": 248.713
+        },
+        "2025": {
+          "usd": 31,
+          "rmb": 248.713
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-7",
+      "kebosModel": "PG1200VA",
+      "supplierModel": "APEX 1000 HV",
+      "description": "1200VA/600W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 7AHx2pcs,LED,Line Interactive UPS",
+      "batteryInfo": "12V7AH*2/24V",
+      "moq": 200,
+      "productSize": "320*130*182",
+      "packingSize": "411*411*310",
+      "nw": 16,
+      "gw": 16.81,
+      "packaging": "2PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 31,
+          "rmb": 248.713
+        },
+        "2025": {
+          "usd": 31,
+          "rmb": 248.713
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-8",
+      "kebosModel": "PG1500VA",
+      "supplierModel": "APEX 1500 HV",
+      "description": "1500VA/900W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 9AHx2pcs,LED,Line Interactive UPS",
+      "batteryInfo": "12V9AH*2/24V",
+      "moq": 200,
+      "productSize": "397*147*205",
+      "packingSize": "411*411*310",
+      "nw": 20.98,
+      "gw": 21.8,
+      "packaging": "2PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 41,
+          "rmb": 328.943
+        },
+        "2025": {
+          "usd": 41,
+          "rmb": 328.943
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064541677-9",
+      "kebosModel": "PG2000VA",
+      "supplierModel": "APEX 2000 HV",
+      "description": "2000VA/1200W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 9AHx2pcs,LED,Line Interactive UPS",
+      "batteryInfo": "12V9AH*2/24V",
+      "moq": 200,
+      "productSize": "397*147*205",
+      "packingSize": "411*411*310",
+      "nw": 21.46,
+      "gw": 22.25,
+      "packaging": "2PCS/CTN",
+      "yearlyCosts": {
+        "2024": {
+          "usd": 48,
+          "rmb": 385.104
+        },
+        "2025": {
+          "usd": 48,
+          "rmb": 385.104
+        }
+      },
+      "updatedAt": "2025-12-30T03:15:41.677Z"
+    },
+    {
+      "id": "PROD-1767064573036",
+      "kebosModel": "AAAA",
+      "supplierModel": "AA",
+      "description": "AAA",
+      "batteryInfo": "",
+      "moq": 0,
+      "productSize": "",
+      "packingSize": "",
+      "nw": 0,
+      "gw": 0,
+      "packaging": "",
+      "yearlyCosts": {
+        "2025": {
+          "usd": 0,
+          "rmb": 0
+        }
+      }
+    }
+  ],
+  "quotes": [
+    {
+      "id": "QT-1767064002471",
+      "date": "2025/12/30",
+      "customer": "aaa",
+      "items": [
+        {
+          "id": "1x59hp3rg",
+          "productId": "PROD-1767063479855",
+          "kebosModel": "PG650VA Lite",
+          "description": "650VA/390W,input:140Vac-300Vac,Frequency 50/60Hz ,output:220/230Vac±10%,Frequency,Frequency 50/60Hz,Transfer Time:2-6ms,W/12V 4.5AHx1pc,LED,Line Interactive UPS",
+          "batteryInfo": "12V4.5AH*1/12V",
+          "purchasePrice": 15,
+          "salesPrice": 20,
+          "moq": 500,
+          "profit": 5,
+          "margin": 0.25
+        }
+      ],
+      "quotedCurrency": "USD",
+      "pricingMode": "USD_TO_USD",
+      "exchangeRate": 7.1,
+      "totalAmount": 10000,
+      "totalProfit": 2500,
+      "avgMargin": 0.25
+    }
+  ]
+}

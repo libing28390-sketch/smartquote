@@ -1,0 +1,15 @@
+{
+  "name": "mail-worker",
+  "version": "1.0.0",
+  "description": "Backup sender script for SmartQuote",
+  "main": "backup_sender.cjs",
+  "scripts": {
+    "start": "node backup_sender.cjs"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.13",
+    "exceljs": "^4.4.0"
+  },
+  "private": true
+}
+

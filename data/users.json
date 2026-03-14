@@ -1,0 +1,17 @@
+[
+  {
+    "username": "admin",
+    "passwordHash": "scrypt$14fa94897b00037ad67ad3fef899dfa8$db237ea670f210dca807875252012c070bba08df8f961b022bbcbae5be10ba049b43fef3b824c95d058d056a862d71b86ecd416ce6f37ab7a5de590fb028fe66",
+    "role": "admin"
+  },
+  {
+    "username": "libing",
+    "passwordHash": "scrypt$84f5ec4c7176632e554f77c84e1782b9$247f4de050907d7fe2a37efec4d5c4fd4610e3fb2e0115532ca59f30abe2a80eac919a7310c1005daec33133347e319059a118859c495f5bc29c266262651697",
+    "role": "admin"
+  },
+  {
+    "username": "sammi",
+    "passwordHash": "scrypt$980fa07b2a0c03bdb2e765f602e731c7$4e84633f935334c52d4811796392a124fa9e5d3abd30042c2febb3d92c87deadf6b7fbd7d0905332e1fef7d776ca50ed29fffd33f4302668d4ead6413d292246",
+    "role": "admin"
+  }
+]

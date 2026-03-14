@@ -1,0 +1,6 @@
+node_modules
+dist
+logs
+nohup.out
+scripts/windows/runtime
+backups/pre_build_*

@@ -1,0 +1,5 @@
+{
+  "name": "SmartQuote UPS Quotation System",
+  "description": "An enterprise-grade online quotation and profit analysis system for UPS products, featuring automated calculations for gross profit and margins based on multi-currency inputs.",
+  "requestFramePermissions": []
+}

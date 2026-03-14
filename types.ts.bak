@@ -1,0 +1,120 @@
+
+export interface User {
+  username: string;
+  passwordHash: string;
+  role: 'admin' | 'staff';
+}
+
+export interface ProductCost {
+  usd: number;
+  rmb: number;
+}
+
+// 定义产品所属系列
+export type ProductSeries = 'Offline' | 'Line-Interactive' | 'Online HF' | 'Online LF' | 'Inverter' | 'Others';
+
+export interface Product {
+  id: string;
+  kebosModel: string;
+  supplierModel: string;
+  series: ProductSeries; // 新增系列字段
+  description: string;
+  batteryInfo: string;
+  moq: number;
+  productSize: string;
+  packingSize: string;
+  pcsPerCtn: number; // 装箱数 (PCS/CTN)
+  nw: number;
+  gw: number;
+  packaging: string;
+  standardPrice?: number; // 标准建议售价 (新增)
+  yearlyCosts: Record<number, ProductCost>;
+  updatedAt?: string;
+}
+
+export interface ProductLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: 'add' | 'update' | 'import' | 'delete';
+  model: string;
+  details: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  productId: string;
+  kebosModel: string;
+  description: string;
+  batteryInfo: string;
+  purchasePrice: number;
+  salesPrice: number;
+  moq: number; // 当前报价单中的成交数量
+  standardMoq: number; // 产品库中的标准起订量
+  isSample?: boolean; // 是否为样品报价
+  profit: number;
+  margin: number;
+}
+
+export type PricingMode = 'USD_TO_RMB' | 'USD_TO_USD' | 'RMB_TO_RMB' | 'RMB_TO_USD';
+
+export interface Quote {
+  id: string;
+  date: string;
+  customer: string;
+  items: QuoteItem[];
+  quotedCurrency: 'USD' | 'RMB';
+  pricingMode: PricingMode;
+  exchangeRate: number;
+  totalAmount: number;
+  totalProfit: number;
+  avgMargin: number;
+}
+
+export type OrderStatus = 'Pending' | 'Production' | 'Shipped' | 'Completed' | 'Cancelled';
+export type PaymentStatus = 'Unpaid' | 'Deposit Received' | 'Fully Paid';
+export type OrderItemType = 'Normal' | 'Sample' | 'FOC';
+
+export interface OrderItem {
+  id: string;
+  productId: string;
+  kebosModel: string;
+  description: string;
+  itemType: OrderItemType;
+  quantity: number;
+  unitPrice: number; // 最终成交单价
+  total: number;
+  remark?: string; // 行备注
+}
+
+export interface OrderHistoryLog {
+  timestamp: string;
+  action: string; // e.g., "Created", "Status Change: Pending -> Production", "Updated Info"
+  operator?: string;
+}
+
+export interface SalesOrder {
+  id: string;
+  sourceQuoteId?: string; // 关联的源报价单ID (可选)
+  customer: string;
+  customerPO?: string;    // 客户的采购单号
+  
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  
+  items: OrderItem[];
+  
+  currency: 'USD' | 'RMB';
+  exchangeRate: number; // 下单时的汇率快照
+  totalAmount: number;
+  paidAmount: number;   // 已收金额
+  
+  // 商务执行条款
+  paymentTerms: string;    // 付款方式
+  deliveryDate: string;    // 交货期
+  createdAt: string;       // 下单时间
+  updatedAt: string;
+  history?: OrderHistoryLog[]; // 订单操作历史
+}
+
+export type View = 'dashboard' | 'products' | 'quotes' | 'new-quote' | 'users' | 'profile' | 'orders' | 'new-order';

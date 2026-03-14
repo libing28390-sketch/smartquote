@@ -1,0 +1,529 @@
+
+import React, { useState, useMemo, useEffect } from 'react';
+import { Save, X, Plus, Trash2, Calendar, DollarSign, RefreshCw, FileText, CheckCircle, Package, Link as LinkIcon, Eye } from 'lucide-react';
+import { SalesOrder, OrderItem, Product, Quote, OrderStatus, PaymentStatus, OrderItemType, User } from '../types';
+import { formatCurrency } from '../utils';
+import QuoteDetailModal from './QuoteDetailModal';
+
+interface OrderFormProps {
+  currentUser: User | null;
+  initialOrder?: SalesOrder | null;
+  initialQuote?: Quote | null; // 从报价单转入时使用
+  products: Product[];
+  quotes: Quote[];
+  orders: SalesOrder[]; // 用于生成 PO 号序列
+  onSave: (order: SalesOrder) => void;
+  onCancel: () => void;
+}
+
+const OrderForm: React.FC<OrderFormProps> = ({ currentUser, initialOrder, initialQuote, products, quotes, orders, onSave, onCancel }) => {
+  const [previewQuoteId, setPreviewQuoteId] = useState<string | null>(null);
+  
+  // 生成新订单号
+  const generateOrderId = () => {
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    return `SO${dateStr}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+  };
+
+  // 自动生成 PO 号 (PO + 日期 + 序列号)
+  const generatePO = () => {
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    const prefix = `PO${dateStr}`;
+    
+    // 查找当天已有的最大序列号
+    const existingPOs = orders
+      .map(o => o.customerPO || '')
+      .filter(po => po.startsWith(prefix));
+    
+    let maxSeq = 0;
+    existingPOs.forEach(po => {
+      const seqStr = po.replace(prefix, '');
+      const seq = parseInt(seqStr, 10);
+      if (!isNaN(seq) && seq > maxSeq) {
+        maxSeq = seq;
+      }
+    });
+    
+    return `${prefix}${(maxSeq + 1).toString().padStart(3, '0')}`;
+  };
+
+  const [id] = useState(initialOrder?.id || generateOrderId());
+  const [customer, setCustomer] = useState(initialOrder?.customer || initialQuote?.customer || '');
+  const [customerPO, setCustomerPO] = useState(initialOrder?.customerPO || generatePO());
+  const [status, setStatus] = useState<OrderStatus>(initialOrder?.status || 'Pending');
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(initialOrder?.paymentStatus || 'Unpaid');
+  const [currency, setCurrency] = useState<'USD'|'RMB'>(initialOrder?.currency || initialQuote?.quotedCurrency || 'USD');
+  const [exchangeRate, setExchangeRate] = useState(initialOrder?.exchangeRate || initialQuote?.exchangeRate || 7.1);
+  
+  const [paymentTerms, setPaymentTerms] = useState(initialOrder?.paymentTerms || '30% Deposit, 70% Before Shipment');
+  const [deliveryDate, setDeliveryDate] = useState(initialOrder?.deliveryDate || '');
+  
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [sourceQuoteId, setSourceQuoteId] = useState(initialOrder?.sourceQuoteId || initialQuote?.id || '');
+
+  // 初始化加载 Items
+  useEffect(() => {
+    if (initialOrder) {
+      setItems(initialOrder.items);
+    } else if (initialQuote) {
+      // 从报价单转换
+      const newItems: OrderItem[] = initialQuote.items.map(qItem => ({
+        id: `OI-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        productId: qItem.productId,
+        kebosModel: qItem.kebosModel,
+        description: qItem.description,
+        itemType: 'Normal',
+        quantity: qItem.moq, // 默认用报价数量
+        unitPrice: qItem.salesPrice, // 默认用报价单价
+        total: qItem.moq * qItem.salesPrice,
+        remark: ''
+      }));
+      setItems(newItems);
+    }
+  }, [initialOrder, initialQuote]);
+
+  // 自动计算总额
+  const totalAmount = useMemo(() => {
+    return items.reduce((sum, item) => {
+      if (item.itemType === 'FOC') return sum; // 赠品不计入总额
+      return sum + (item.quantity * item.unitPrice);
+    }, 0);
+  }, [items]);
+
+  const handleAddItem = (product: Product) => {
+    // 查找该客户最近一次报价单中的该产品价格
+    let lastPrice = 0;
+    let priceHint = '';
+    
+    if (customer) {
+      // 1. 找到该客户的所有报价单
+      const customerQuotes = quotes.filter(q => 
+        q.customer.trim().toLowerCase() === customer.trim().toLowerCase()
+      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // 2. 遍历报价单找到包含该产品的最近一次报价
+      for (const q of customerQuotes) {
+        const item = q.items.find(i => i.productId === product.id || i.kebosModel === product.kebosModel);
+        if (item) {
+          lastPrice = item.salesPrice;
+          priceHint = `引用报价单 ${q.id} (${q.date}, 汇率: ${q.exchangeRate})`;
+          // 如果是第一次添加且当前汇率未设置（或默认），可以考虑提示用户汇率，
+          // 但为了不打扰用户，我们只在 UI 上显示价格来源
+          break;
+        }
+      }
+    }
+
+    // fallback to product standard price if no quote found
+    if (lastPrice === 0 && product.standardPrice) {
+      lastPrice = product.standardPrice;
+      priceHint = '引用产品标准售价';
+    }
+
+    const newItem: OrderItem = {
+      id: `OI-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      productId: product.id,
+      kebosModel: product.kebosModel,
+      description: product.description,
+      itemType: 'Normal',
+      quantity: product.moq || 1,
+      unitPrice: lastPrice, // 自动填充最近报价
+      total: 0,
+      remark: priceHint // 将价格来源作为备注提示
+    };
+    setItems([...items, newItem]);
+  };
+
+  const updateItem = (id: string, updates: Partial<OrderItem>) => {
+    setItems(items.map(item => {
+      if (item.id !== id) return item;
+      const updated = { ...item, ...updates };
+      // 自动重算行小计
+      updated.total = updated.quantity * updated.unitPrice;
+      return updated;
+    }));
+  };
+
+  const removeItem = (id: string) => {
+    if(window.confirm('确定移除此行吗？')) {
+      setItems(items.filter(i => i.id !== id));
+    }
+  };
+
+  const [productSearch, setProductSearch] = useState('');
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!customer) {
+      alert('请填写客户名称');
+      return;
+    }
+    if (items.length === 0) {
+      alert('订单不能为空');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // 构建历史记录
+      const currentHistory = initialOrder?.history || [];
+      const newHistory = [...currentHistory];
+      
+      // 如果是新订单
+      if (!initialOrder) {
+        newHistory.push({
+          timestamp: new Date().toISOString(),
+          action: 'Created',
+          operator: currentUser?.username || 'System'
+        });
+      } else {
+        // 检查状态变化
+        if (status !== initialOrder.status) {
+          newHistory.push({
+            timestamp: new Date().toISOString(),
+            action: `Status Change: ${initialOrder.status} -> ${status}`,
+            operator: currentUser?.username || 'System'
+          });
+        }
+        // 也可以记录其他重要修改，这里暂只记录状态
+        newHistory.push({
+           timestamp: new Date().toISOString(),
+           action: 'Updated Info',
+           operator: currentUser?.username || 'System'
+        });
+      }
+
+      const order: SalesOrder = {
+        id,
+        customer,
+        customerPO,
+        status,
+        paymentStatus,
+        currency,
+        exchangeRate,
+        items,
+        totalAmount,
+        paidAmount: initialOrder?.paidAmount || 0, // 暂不处理收款逻辑
+        paymentTerms,
+        deliveryDate,
+        sourceQuoteId,
+        createdAt: initialOrder?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        history: newHistory
+      };
+      await onSave(order);
+    } catch (e) {
+      console.error("Save order failed:", e);
+      alert("保存订单失败");
+      setIsSaving(false);
+    }
+  };
+
+  const getProductPriceHint = (product: Product) => {
+    let priceInfo = { price: 0, source: 'none', date: '' };
+
+    if (customer) {
+      const customerQuotes = quotes.filter(q => 
+        q.customer.trim().toLowerCase() === customer.trim().toLowerCase()
+      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      for (const q of customerQuotes) {
+        const item = q.items.find(i => i.productId === product.id || i.kebosModel === product.kebosModel);
+        if (item) {
+          priceInfo = { price: item.salesPrice, source: 'quote', date: q.date };
+          break;
+        }
+      }
+    }
+
+    if (priceInfo.price === 0 && product.standardPrice) {
+      priceInfo = { price: product.standardPrice, source: 'standard', date: '' };
+    }
+
+    return priceInfo;
+  };
+
+  const filteredProducts = useMemo(() => {
+    let list = products;
+    if (productSearch) {
+      list = products.filter(p => p.kebosModel.toLowerCase().includes(productSearch.toLowerCase()));
+    }
+    return list.slice(0, 20); // Limit to 20 for better performance
+  }, [products, productSearch]);
+
+  const getQuoteFromRemark = (remark: string) => {
+    // 匹配 "引用报价单 Q2024..." 格式
+    const match = remark?.match(/引用报价单\s+([A-Za-z0-9-]+)/);
+    if (match) {
+      return match[1];
+    }
+    return null;
+  };
+
+  const handlePreviewQuote = (quoteId: string) => {
+    // 查找报价单对象（如果 ID 是从备注里解析出来的，可能在 quotes 数组里）
+    // 注意：这里我们假设 quotes 包含了所有历史报价，或者至少包含了最近的。
+    // 如果 quoteId 在 quotes 列表中找不到，可能需要从后端 fetch（但当前架构是全量加载的）
+    const quote = quotes.find(q => q.id === quoteId);
+    if (quote) {
+      // 传递完整对象给 Modal
+      // 但这里有点 hacky：QuoteDetailModal 需要完整 Quote 对象，而我们只有 ID
+      // 幸好我们有 quotes 列表
+      setPreviewQuoteId(quoteId);
+    } else {
+      alert('未找到原始报价单数据');
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto pb-20 px-4">
+      {previewQuoteId && (
+        <QuoteDetailModal 
+          quote={quotes.find(q => q.id === previewQuoteId)!} 
+          onClose={() => setPreviewQuoteId(null)} 
+          logo="/assets/logo.png" 
+        />
+      )}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">{initialOrder ? '编辑订单' : '新建销售订单'}</h1>
+          <p className="text-slate-500 text-xs font-medium mt-1 uppercase tracking-wider">{id}</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="px-6 py-3 border border-slate-200 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">取消</button>
+          <button onClick={handleSave} disabled={isSaving} className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all flex items-center gap-2 disabled:opacity-70">
+            {isSaving ? <RefreshCw className="animate-spin" size={18}/> : <Save size={18}/>} 保存订单
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Left Column: Basic Info */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
+             <h3 className="font-black text-slate-900 flex items-center gap-2">
+               <FileText size={18} className="text-blue-600"/> 基础信息
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">客户名称</label>
+                  <input type="text" value={customer} onChange={e => setCustomer(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold outline-none focus:border-slate-900 transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">客户 PO 号</label>
+                  <input type="text" value={customerPO} onChange={e => setCustomerPO(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold outline-none focus:border-slate-900 transition-all" placeholder="例如: PO-2024-001" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">付款条款</label>
+                  <input type="text" value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold outline-none focus:border-slate-900 transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">交货日期 (Delivery Date)</label>
+                  <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold outline-none focus:border-slate-900 transition-all" />
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
+             <div className="flex justify-between items-center">
+                <h3 className="font-black text-slate-900 flex items-center gap-2">
+                  <Package size={18} className="text-blue-600"/> 订单明细
+                </h3>
+                <button onClick={() => setShowProductSelector(!showProductSelector)} className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 transition-all">
+                  + 添加产品
+                </button>
+             </div>
+
+             {showProductSelector && (
+               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in slide-in-from-top-2">
+                 <input 
+                   type="text" 
+                   placeholder="搜索产品型号..." 
+                   value={productSearch}
+                   onChange={e => setProductSearch(e.target.value)}
+                   className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold mb-3 outline-none focus:border-blue-500"
+                 />
+                 <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                   {filteredProducts.map(p => {
+                     const hint = getProductPriceHint(p);
+                     return (
+                       <button key={p.id} onClick={() => { handleAddItem(p); setShowProductSelector(false); }} className="flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold hover:border-blue-500 hover:shadow-sm transition-all text-left group">
+                         <div>
+                           <div className="font-black text-slate-700 group-hover:text-blue-600">{p.kebosModel}</div>
+                           <div className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">{p.description}</div>
+                         </div>
+                         <div className="text-right">
+                           {hint.price > 0 ? (
+                             <>
+                               <div className="text-blue-600 font-black">{formatCurrency(hint.price, currency)}</div>
+                               <div className="text-[9px] text-slate-400 scale-90 origin-right">
+                                 {hint.source === 'quote' ? `历史报价 (${hint.date})` : '标准售价'}
+                               </div>
+                             </>
+                           ) : (
+                             <div className="text-slate-300 text-[10px]">暂无参考价</div>
+                           )}
+                         </div>
+                       </button>
+                     );
+                   })}
+                 </div>
+               </div>
+             )}
+
+             <div className="space-y-4">
+               {items.map((item, idx) => (
+                 <div key={item.id} className="p-4 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-3">
+                       <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">{idx + 1}</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-black text-slate-900">{item.kebosModel}</p>
+                              {item.remark && getQuoteFromRemark(item.remark) && (
+                                <button 
+                                  onClick={() => handlePreviewQuote(getQuoteFromRemark(item.remark)!)}
+                                  className="flex items-center gap-1 px-2 py-0.5 bg-violet-100 text-violet-700 rounded-full text-[9px] font-bold hover:bg-violet-200 transition-colors"
+                                  title="点击查看原始报价单"
+                                >
+                                  <LinkIcon size={10} />
+                                  <span>来自报价: {getQuoteFromRemark(item.remark)}</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                       </div>
+                       <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors"><X size={16}/></button>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                       <div>
+                          <label className="text-[9px] font-black text-slate-300 uppercase">类型</label>
+                          <select 
+                            value={item.itemType} 
+                            onChange={e => updateItem(item.id, { itemType: e.target.value as OrderItemType })}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-blue-500"
+                          >
+                            <option value="Normal">正价品</option>
+                            <option value="Sample">样品</option>
+                            <option value="FOC">赠品/备件</option>
+                          </select>
+                       </div>
+                       <div>
+                          <label className="text-[9px] font-black text-slate-300 uppercase">数量</label>
+                          <input 
+                            type="number" 
+                            value={item.quantity} 
+                            onChange={e => updateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-blue-500"
+                          />
+                       </div>
+                       <div>
+                          <label className="text-[9px] font-black text-slate-300 uppercase">单价 ({currency})</label>
+                          <input 
+                            type="number" 
+                            value={item.unitPrice} 
+                            disabled={item.itemType === 'FOC'}
+                            onChange={e => updateItem(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-blue-500 disabled:opacity-50"
+                          />
+                       </div>
+                       <div>
+                          <label className="text-[9px] font-black text-slate-300 uppercase">行备注</label>
+                          <input 
+                            type="text" 
+                            value={item.remark || ''} 
+                            onChange={e => updateItem(item.id, { remark: e.target.value })}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-blue-500"
+                            placeholder="如: 英标插头"
+                          />
+                       </div>
+                    </div>
+                 </div>
+               ))}
+               {items.length === 0 && <div className="text-center py-10 text-slate-400 text-xs italic">暂无明细，请添加产品</div>}
+             </div>
+          </div>
+          
+          {initialOrder?.history && initialOrder.history.length > 0 && (
+            <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
+               <h3 className="font-black text-slate-900 flex items-center gap-2">
+                 <RefreshCw size={18} className="text-blue-600"/> 操作历史
+               </h3>
+               <div className="space-y-3">
+                 {initialOrder.history.slice().reverse().map((log, idx) => (
+                   <div key={idx} className="flex gap-4 text-xs">
+                     <div className="text-slate-400 font-mono w-32 shrink-0">{new Date(log.timestamp).toLocaleString()}</div>
+                     <div className="font-bold text-slate-700 flex-1">{log.action}</div>
+                     <div className="text-slate-400">{log.operator}</div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Status & Totals */}
+        <div className="space-y-6">
+           <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
+              <h3 className="font-black text-slate-900 text-sm uppercase tracking-widest">状态管理</h3>
+              
+              <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase">执行状态</label>
+                 <select value={status} onChange={e => setStatus(e.target.value as OrderStatus)} className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none">
+                    <option value="Pending">待处理 (Pending)</option>
+                    <option value="Production">生产中 (Production)</option>
+                    <option value="Shipped">已发货 (Shipped)</option>
+                    <option value="Completed">已完成 (Completed)</option>
+                    <option value="Cancelled">已取消 (Cancelled)</option>
+                 </select>
+              </div>
+
+              <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-400 uppercase">资金状态</label>
+                 <select value={paymentStatus} onChange={e => setPaymentStatus(e.target.value as PaymentStatus)} className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none">
+                    <option value="Unpaid">未付款 (Unpaid)</option>
+                    <option value="Deposit Received">已收定金 (Deposit)</option>
+                    <option value="Fully Paid">全款已付 (Paid)</option>
+                 </select>
+              </div>
+           </div>
+
+           <div className="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl">
+              <h3 className="font-black text-slate-400 text-xs uppercase tracking-widest mb-6">财务汇总</h3>
+              
+              <div className="space-y-4 mb-8">
+                 <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-xs font-bold">币种</span>
+                    <select value={currency} onChange={e => setCurrency(e.target.value as any)} className="bg-slate-800 border-none text-white text-xs font-bold rounded px-2 py-1 outline-none">
+                       <option value="USD">USD</option>
+                       <option value="RMB">RMB</option>
+                    </select>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-xs font-bold">锁定汇率</span>
+                    <input type="number" value={exchangeRate} onChange={e => setExchangeRate(parseFloat(e.target.value))} className="w-20 bg-slate-800 border-none text-white text-xs font-bold rounded px-2 py-1 text-right outline-none"/>
+                 </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-800">
+                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">订单总金额</p>
+                 <p className="text-4xl font-black tracking-tight">{formatCurrency(totalAmount, currency)}</p>
+              </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderForm;
+
